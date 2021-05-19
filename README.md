@@ -1,6 +1,6 @@
 # Go-Static
 
-Just another tiny, speedy webserver
+_Just another tiny, speedy webserver_
 Host your static frontend with speed.
 
 ## But Why?
@@ -28,6 +28,23 @@ COPY ./your-static-files /static
 docker run -d --name go-static -v $(pwd)/your-static-files:/static:ro fluktuid/go-static
 ```
 
+## I need more configuration
+
+Of course, a more precise configuration of the service is also possible.
+There are different values that can be configured via environment variables:
+
+
+env var              | description                                                                             | default 
+-------------------- | --------------------------------------------------------------------------------------- | -------------- |
+ADDR                 | TCP address to listen to                                                                | :8080          |
+ADDR_TLS             | TCP address to listen to TLS (aka SSL or HTTPS) requests. Leave empty for disabling TLS | ""             |
+BYTE_RANGE           | Enables byte range requests if set to true                                              | false          |
+CERT_FILE            | Path to TLS certificate file                                                            | ssl-cert.pem   |
+COMPRESS             | Enables transparent response compression if set to true                                 | false          |
+DIR                  | Directory to serve static files from                                                    | /static        |
+GENERATE_INDEX_PAGES | Whether to generate directory index pages                                               | true           |
+KEY_FILE             | Path to TLS key file                                                                    | ./ssl-cert.key |
+VHOST                | Enables virtual hosting by prepending the requested path with the requested hostname    | false          |
 
 ## But how fast
 
