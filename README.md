@@ -1,7 +1,9 @@
 # Go-Static
 
-_Just another tiny, speedy webserver_
+_Just another tiny, speedy webserver_\
 Host your static frontend with speed.
+
+(The code is based on the [fasthttp fileserver example](https://github.com/valyala/fasthttp/blob/master/examples/fileserver/fileserver.go).)
 
 ## But Why?
 
