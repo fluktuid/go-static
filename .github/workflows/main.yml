@@ -43,8 +43,9 @@ jobs:
           push: true
           tags: |
             fluktuid/go-static:latest
-            ghcr.io/fluktuid/go-static:latest
-            docker.pkg.github.com/fluktuid/go-static/go-static
+            ghcr.io/${{ github.repository }}/go-static:latest
+            docker.pkg.github.com/${{ github.repository }}/go-static/go-static
+            docker.pkg.github.com/${{ github.repository }}/go-static/go-static:${{ github.ref }}
       -
         name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
