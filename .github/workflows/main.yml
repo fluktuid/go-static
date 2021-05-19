@@ -36,14 +36,28 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       -
-        name: Build and push
+        name: Build and push DockerHub
         id: docker_build
         uses: docker/build-push-action@v2
         with:
           push: true
           tags: |
             fluktuid/go-static:latest
+      -
+        name: Build and push GHCR
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: |
             ghcr.io/${{ github.repository }}/go-static:latest
+      -
+        name: Build and push gitlab pkg
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: |
             docker.pkg.github.com/${{ github.repository }}/go-static/go-static
             docker.pkg.github.com/${{ github.repository }}/go-static/go-static:${{ github.ref }}
       -
