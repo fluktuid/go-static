@@ -18,9 +18,9 @@ Either you build your own image (preferred) or you mount the static files into a
 ### Build your own Image
 
 ``` Dockerfile
-FROM fluktuid/go-static:1.0.0
-# or use the github registry: FROM docker.pkg.github.com/fluktuid/go-static/go-static:1.0.0
-LABEL maintainer="<yourmail>"
+FROM fluktuid/go-static:1.0.1
+# or use the github registry: FROM docker.pkg.github.com/fluktuid/go-static/go-static:1.0.1
+LABEL maintainer="yourname <yourmail>"
 
 COPY ./your-static-files /static
 ```
