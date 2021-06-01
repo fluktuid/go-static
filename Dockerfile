@@ -5,6 +5,8 @@
 FROM golang:1.16-alpine AS builder
 ARG GO_FILES=.
 ARG GO_MAIN=main.go
+ARG USER_NAME=go-static
+ARG USER_UID=1001
 LABEL maintainer="Lukas Paluch <fluktuid@users.noreply.github.com>"
 # Install git.
 # Git is required for fetching the dependencies.
@@ -15,9 +17,6 @@ RUN apk update && apk add --no-cache ca-certificates && update-ca-certificates
 # Set the Current Working Directory inside the container
 WORKDIR /app
 
-# Create appuser.
-ENV USER=appuser
-ENV UID=10001
 # See https://stackoverflow.com/a/55757473/12429735RUN
 RUN adduser \
     --disabled-password \
@@ -25,8 +24,8 @@ RUN adduser \
     --home "/nonexistent" \
     --shell "/sbin/nologin" \
     --no-create-home \
-    --uid "${UID}" \
-    "${USER}"
+    --uid "${USER_UID}" \
+    "${USER_NAME}"
 
 COPY ${GO_FILES} .
 RUN echo ${GO_FILES}
@@ -42,7 +41,7 @@ RUN GOOS=${GOOS} GOARCH=${GOARCH} CGO_ENABLED=${CGO_ENABLED} go build -ldflags="
 
 # create tmp folder for use in scratch
 RUN mkdir /my_tmp
-RUN chown -R ${USER}:${USER} /my_tmp
+RUN chown -R ${USER_NAME}:${USER_NAME} /my_tmp
 
 
 ############################
@@ -67,7 +66,8 @@ ENV TZ=Europe/Berlin
 COPY --from=builder /my_tmp /tmp
 
 # Use an unprivileged user.
-USER ${USER}:${USER}
+COPY --from=builder /etc/passwd /etc/passwd
+USER ${USER_NAME}:${USER_NAME}
 
 # set necessary env
 ENV ADDR=":8080"
