@@ -70,7 +70,7 @@ COPY --from=builder /my_tmp /tmp
 USER ${USER}:${USER}
 
 # set necessary env
-ENV ADDR="localhost:8080"
+ENV ADDR=":8080"
 ENV DIR="/static"
 
 # Run the binary.
