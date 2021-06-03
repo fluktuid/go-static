@@ -25,6 +25,7 @@ var (
 	generateIndexPages = flag.Bool("generateIndexPages", true, "Whether to generate directory index pages")
 	keyFile            = flag.String("keyFile", "./ssl-cert.key", "Path to TLS key file")
 	vhost              = flag.Bool("vhost", false, "Enables virtual hosting by prepending the requested path with the requested hostname")
+	stats              = flag.Bool("stats", true, "Enables stats serving")
 )
 
 func main() {
@@ -44,27 +45,12 @@ func main() {
 	}
 	fsHandler := fs.NewRequestHandler()
 
-	// Create RequestHandler serving server stats on /stats and files
-	// on other requested paths.
-	// /stats output may be filtered using regexps. For example:
-	//
-	//   * /stats?r=fs will show only stats (expvars) containing 'fs'
-	//     in their names.
-	requestHandler := func(ctx *fasthttp.RequestCtx) {
-		switch string(ctx.Path()) {
-		case "/stats":
-			expvarhandler.ExpvarHandler(ctx)
-		default:
-			fsHandler(ctx)
-			updateFSCounters(ctx)
-		}
-	}
-
 	// Start HTTP server.
 	if len(*addr) > 0 {
 		log.Printf("Starting HTTP server on %q", *addr)
 		go func() {
-			if err := fasthttp.ListenAndServe(*addr, requestHandler); err != nil {
+			handler := getRequestHandler(*stats, fsHandler)
+			if err := fasthttp.ListenAndServe(*addr, handler); err != nil {
 				log.Fatalf("error in ListenAndServe: %s", err)
 			}
 		}()
@@ -74,17 +60,44 @@ func main() {
 	if len(*addrTLS) > 0 {
 		log.Printf("Starting HTTPS server on %q", *addrTLS)
 		go func() {
-			if err := fasthttp.ListenAndServeTLS(*addrTLS, *certFile, *keyFile, requestHandler); err != nil {
+			handler := getRequestHandler(*stats, fsHandler)
+			if err := fasthttp.ListenAndServeTLS(*addrTLS, *certFile, *keyFile, handler); err != nil {
 				log.Fatalf("error in ListenAndServeTLS: %s", err)
 			}
 		}()
 	}
 
 	log.Printf("Serving files from directory %q", *dir)
-	log.Printf("See stats at http://%s/stats", *addr)
+	if *stats {
+		log.Printf("See stats at http://%s/stats", *addr)
+	}
 
 	// Wait forever.
 	select {}
+}
+
+func getRequestHandler(stats bool, fsHandler fasthttp.RequestHandler) func(*fasthttp.RequestCtx) {
+	if stats {
+		// Create RequestHandler serving server stats on /stats and files
+		// on other requested paths.
+		// /stats output may be filtered using regexps. For example:
+		//
+		//   * /stats?r=fs will show only stats (expvars) containing 'fs'
+		//     in their names.
+		return func(ctx *fasthttp.RequestCtx) {
+			switch string(ctx.Path()) {
+			case "/stats":
+				expvarhandler.ExpvarHandler(ctx)
+			default:
+				fsHandler(ctx)
+				updateFSCounters(ctx)
+			}
+		}
+	} else {
+		return func(ctx *fasthttp.RequestCtx) {
+			fsHandler(ctx)
+		}
+	}
 }
 
 func updateFSCounters(ctx *fasthttp.RequestCtx) {
