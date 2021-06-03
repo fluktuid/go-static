@@ -18,6 +18,7 @@ import (
 var (
 	addr               = flag.String("addr", ":8080", "TCP address to listen to")
 	addrTLS            = flag.String("addrTLS", "", "TCP address to listen to TLS (aka SSL or HTTPS) requests. Leave empty for disabling TLS")
+	addrStats          = flag.String("addrStats", "", "TCP address to serve stats server on")
 	byteRange          = flag.Bool("byteRange", false, "Enables byte range requests if set to true")
 	certFile           = flag.String("certFile", "./ssl-cert.pem", "Path to TLS certificate file")
 	compress           = flag.Bool("compress", false, "Enables transparent response compression if set to true")
@@ -49,7 +50,7 @@ func main() {
 	if len(*addr) > 0 {
 		log.Printf("Starting HTTP server on %q", *addr)
 		go func() {
-			handler := getRequestHandler(*stats, fsHandler)
+			handler := getRequestHandler(*stats, *addrStats, fsHandler)
 			if err := fasthttp.ListenAndServe(*addr, handler); err != nil {
 				log.Fatalf("error in ListenAndServe: %s", err)
 			}
@@ -60,7 +61,20 @@ func main() {
 	if len(*addrTLS) > 0 {
 		log.Printf("Starting HTTPS server on %q", *addrTLS)
 		go func() {
-			handler := getRequestHandler(*stats, fsHandler)
+			handler := getRequestHandler(*stats, *addrStats, fsHandler)
+			if err := fasthttp.ListenAndServeTLS(*addrTLS, *certFile, *keyFile, handler); err != nil {
+				log.Fatalf("error in ListenAndServeTLS: %s", err)
+			}
+		}()
+	}
+
+	// Start stats server.
+	if len(*addrStats) > 0 {
+		log.Printf("Starting HTTPS server on %q", *addrTLS)
+		go func() {
+			handler := func(ctx *fasthttp.RequestCtx) {
+				expvarhandler.ExpvarHandler(ctx)
+			}
 			if err := fasthttp.ListenAndServeTLS(*addrTLS, *certFile, *keyFile, handler); err != nil {
 				log.Fatalf("error in ListenAndServeTLS: %s", err)
 			}
@@ -68,16 +82,18 @@ func main() {
 	}
 
 	log.Printf("Serving files from directory %q", *dir)
-	if *stats {
+	if *stats && len(*addrStats) == 0 {
 		log.Printf("See stats at http://%s/stats", *addr)
+	} else if len(*addrStats) > 0 {
+		log.Printf("See stats at http://%s/", *addrStats)
 	}
 
 	// Wait forever.
 	select {}
 }
 
-func getRequestHandler(stats bool, fsHandler fasthttp.RequestHandler) func(*fasthttp.RequestCtx) {
-	if stats {
+func getRequestHandler(stats bool, addrStats string, fsHandler fasthttp.RequestHandler) func(*fasthttp.RequestCtx) {
+	if stats && len(addrStats) == 0 {
 		// Create RequestHandler serving server stats on /stats and files
 		// on other requested paths.
 		// /stats output may be filtered using regexps. For example:
