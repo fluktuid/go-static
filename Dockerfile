@@ -73,6 +73,9 @@ USER ${USER_NAME}:${USER_NAME}
 ENV ADDR=":8080"
 ENV DIR="/static"
 
+# expose port
+EXPOSE 8080/TCP
+
 # Run the binary.
 ENTRYPOINT [ "/main" ]
 
