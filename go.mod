@@ -1,10 +1,14 @@
 module github.com/fluktuid/go-static
 
-go 1.16
+go 1.24.4
 
 require (
-	github.com/golang/snappy v0.0.3 // indirect
-	github.com/klauspost/compress v1.15.13 // indirect
 	github.com/kouhin/envflag v0.0.0-20150818174321-0e9a86061649
-	github.com/valyala/fasthttp v1.43.0
+	github.com/valyala/fasthttp v1.62.0
+)
+
+require (
+	github.com/andybalholm/brotli v1.1.1 // indirect
+	github.com/klauspost/compress v1.18.0 // indirect
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
 )
